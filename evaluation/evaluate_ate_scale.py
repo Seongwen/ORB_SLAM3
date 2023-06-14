@@ -182,7 +182,7 @@ if __name__=="__main__":
         print( "absolute_translational_error.std %f m"%numpy.std(trans_error))
         print( "absolute_translational_error.min %f m"%numpy.min(trans_error))
         print( "absolute_translational_error.max %f m"%numpy.max(trans_error))
-        print( "max idx: %i" %numpy.argmax(trans_error)
+        print( "max idx: %i" %numpy.argmax(trans_error))
     else:
         # print "%f, %f " % (numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)),  scale)
         # print "%f,%f" % (numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)),  scale)
