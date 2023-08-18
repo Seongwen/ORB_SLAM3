@@ -33,6 +33,10 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 
+#include "../include/Converter.h" //edit 0804 chu
+#include <Eigen/Core> // edit
+#include <opencv2/core/eigen.hpp> // edit
+
 namespace ORB_SLAM3
 {
 
@@ -180,6 +184,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR || mSensor==IMU_RGBD)
         mpAtlas->SetInertialSensor();
+        
+    //Create the Map -edit chu
+    mpMap = new Map();
 
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpAtlas);
@@ -547,7 +554,7 @@ void System::Shutdown()
 
     if(!mStrSaveAtlasToFile.empty())
     {
-        Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
+        Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL); // VERBOSITY_NORMAL=1,
         SaveAtlas(FileType::BINARY_FILE);
     }
 
@@ -1318,6 +1325,49 @@ void System::SaveDebugData(const int &initIdx)
 }
 
 
+/////////////////////////
+//////edit 0804 chu
+    // save map point
+
+void System::SaveMapPoints(const string &filename) {
+    cout << endl << "Saving map points to " << filename << " ..." << endl;
+
+    // vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+    vector<MapPoint*> vpMPs = mpAtlas->GetAllMapPoints(); ///edit 0804 chu
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+////eidt 0817 chu timestamp
+    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+///
+    for(size_t i=0; i<vpMPs.size(); i++) {
+        MapPoint* pMP = vpMPs[i];
+        KeyFrame* pKF = vpKFs[i]; ////eidt 0817 chu timestamp
+
+        if(pMP->isBad())
+            continue;
+
+        //cv::Mat MPPositions = pMP->GetWorldPos();
+        //eidt 0804 chu
+        cv::Mat MPPositions;
+	cv::eigen2cv(pMP->GetWorldPos(), MPPositions);
+
+        //f << setprecision(7) << " " << MPPositions.at<float>(0) << " " << MPPositions.at<float>(1) << " " << MPPositions.at<float>(2) << endl;
+        //eidt 0817 chu timestamp
+        f << setprecision(7) << " " << MPPositions.at<float>(0) << " " << MPPositions.at<float>(1) << " " << MPPositions.at<float>(2) << setprecision(6) << pKF->mTimeStamp << endl;
+    }
+
+    f.close();
+    cout << endl << "Map Points saved!" << endl;
+
+}
+
+
 int System::GetTrackingState()
 {
     unique_lock<mutex> lock(mMutexState);
@@ -1545,5 +1595,7 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
-} //namespace ORB_SLAM
 
+
+
+} //namespace ORB_SLAM
