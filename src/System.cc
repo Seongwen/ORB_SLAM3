@@ -186,7 +186,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpAtlas->SetInertialSensor();
         
     //Create the Map -edit chu
-    mpMap = new Map();
+    // mpMap = new Map();
 
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpAtlas);
@@ -1342,24 +1342,34 @@ void System::SaveMapPoints(const string &filename) {
     f << fixed;
 
 ////eidt 0817 chu timestamp
-    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
-    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+//    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+//    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 ///
     for(size_t i=0; i<vpMPs.size(); i++) {
         MapPoint* pMP = vpMPs[i];
-        KeyFrame* pKF = vpKFs[i]; ////eidt 0817 chu timestamp
+//        KeyFrame* pKF = vpKFs[i]; ////eidt 0817 chu timestamp
 
+	Eigen::Vector3f position = pMP->GetWorldPos();
+	std::map<KeyFrame*, tuple<int,int>> osv = pMP->GetObservations();
+	std::vector<KeyFrame*> associatedKeyFrames;
+	for (const auto& observation : osv) {
+		associatedKeyFrames.push_back(observation.first);
+	}    
+	    
         if(pMP->isBad())
             continue;
+	for (const auto& keyframe : associatedKeyFrames) {
+		double timestamp = keyframe->mTimeStamp;  // timestamp 변수에는 Keyframe의 timestamp 값 저장.
+		f << setprecision(7) << position(0) << " " << position(1) << " " << position(2) << setprecision(6) << " " << keyframe->mTimeStamp << endl;
+    	        // cout<< "position: "<<position(0)<< " " <<position(1)<< " " <<position(2) <<endl;
+		}
 
         //cv::Mat MPPositions = pMP->GetWorldPos();
         //eidt 0804 chu
         cv::Mat MPPositions;
 	cv::eigen2cv(pMP->GetWorldPos(), MPPositions);
 
-        //f << setprecision(7) << " " << MPPositions.at<float>(0) << " " << MPPositions.at<float>(1) << " " << MPPositions.at<float>(2) << endl;
-        //eidt 0817 chu timestamp
-        f << setprecision(7) << " " << MPPositions.at<float>(0) << " " << MPPositions.at<float>(1) << " " << MPPositions.at<float>(2) << setprecision(6) << pKF->mTimeStamp << endl;
+        //f << setprecision(7) << " " << MPPositions.at<float>(0) << " " << MPPositions.at<float>(1) << " " << MPPositions.at<float>(2) << endl;    
     }
 
     f.close();
