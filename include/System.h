@@ -186,6 +186,8 @@ public:
 
     float GetImageScale();
 
+    void SaveMapPoints(const string &filename); //////edit 1004 chu   // save map point
+
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
     void InsertResizeTime(double& time);
